@@ -1,1 +1,2 @@
-# internship-terraform
+# Resources for internship-terraform
+
