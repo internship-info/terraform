@@ -108,6 +108,9 @@ resource "aws_iam_user" "example" {
   name = var.users_list[count.index]
 }
 
+################################################
+# for-each
+################################################
 
 
 
