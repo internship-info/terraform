@@ -7,3 +7,12 @@ variable "prefix" {
 variable "region" {
   default = "us-east-1a"
 }
+
+variable "vpc_id" {
+  default = "vpc-1234"
+}
+
+variable "default_cidr_block" {
+  type    = string
+  default = "0.0.0.0/0"
+}
