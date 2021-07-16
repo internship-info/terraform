@@ -148,6 +148,74 @@ resource "aws_subnet" "example" {
   availability_zone = each.key
 }
 
+#=================================================
+
+# for_each resource with a map of objects
+variable "instances_map" {
+  type = map(object({
+    ami = string
+    instance_type = string
+    associate_public_ip = bool
+  }))
+
+  default = {
+    artifactory = {
+      ami = "ami-0e2b68f7b98b92c69"
+      instance_type = "t3.small"
+      associate_public_ip = false
+    }
+    jenkins = {
+      ami = "ami-0e2b68f7b98b92c69"
+      instance_type = "t3.small"
+      associate_public_ip = true
+    }
+
+  }
+}
+resource "aws_instance" "this" {
+  for_each = var.instances_map
+  ami = each.value.ami
+  instance_type = each.value.instance_type
+  associate_public_ip_address = each.value.associate_public_ip
+  tags = { Name = each.key }
+}
+
+# for_each resource with a list of objects
+variable "instances_list" {
+  type = list(object({
+    ami = string
+    instance_type = string
+    associate_public_ip = bool
+  }))
+
+  default = [
+    {
+      name = "artifactory"
+      ami = "ami-0e2b68f7b98b92c69"
+      instance_type = "t3.small"
+      associate_public_ip = false
+    },
+    {
+      name = "jenkins"
+      ami = "ami-0e2b68f7b98b92c69"
+      instance_type = "t3.small"
+      associate_public_ip = true
+    }
+  ]
+}
+resource "aws_instance" "this" {
+  for_each = { for vm in var.instances_list : vm.name => vm}
+  ami = each.value.ami
+  instance_type = each.value.instance_type
+  associate_public_ip_address = each.value.associate_public_ip
+  tags = { Name = each.value.name }
+}
+
+#=================================================
+
+# for_each inline block with a list
+
+
 
 #################################################
 #                                               #
