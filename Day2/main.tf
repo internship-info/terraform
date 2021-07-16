@@ -112,6 +112,41 @@ resource "aws_iam_user" "example" {
 # for-each
 ################################################
 
+# for_each on resources with a list
+variable "user_names0" {
+  type = list(string)
+  default = [ "vlad", "constantin", "egor" ]
+}
+resource "aws_iam_user" "example" {
+  for_each = toset(var.user_names0)
+  name = each.value
+}
+
+# for_each on resources with a set
+variable "user_names1" {
+  type = set(string)
+  default = [ "vlad", "constantin", "egor" ]
+}
+resource "aws_iam_user" "example" {
+  for_each = var.user_names1
+  name = each.value
+}
+
+# for_each on resources with a map
+variable "subnets_map" {
+  type = map(string)
+  default = {
+    us-east-1a = "10.0.1.0/24"
+    us-east-1b = "10.0.2.0/24"
+    us-east-1c = "10.0.3.0/24"
+  }
+}
+resource "aws_subnet" "example" {
+  for_each = var.subnets_map
+  vpc_id = var.vpc
+  cidr_block = each.value
+  availability_zone = each.key
+}
 
 
 #################################################
