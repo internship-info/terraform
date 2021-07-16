@@ -31,7 +31,7 @@ variable "security_group" {
 # Used
 resource "aws_security_group" "ssh-http" {
   name = "ssh-http"
-  vpc_id = var.vpc
+  vpc_id = var.vpc_id
 
   dynamic "ingress" {
     for_each = var.security_group
@@ -61,7 +61,7 @@ resource "aws_lb_target_group" "lb_target_group" {
   port = "8080"
   protocol = "HTTP"
   target_type = "instance"
-  vpc_id = var.vpc
+  vpc_id = var.vpc_id
 
   health_check {
     path = "/"
@@ -143,7 +143,7 @@ variable "subnets_map" {
 }
 resource "aws_subnet" "example" {
   for_each = var.subnets_map
-  vpc_id = var.vpc
+  vpc_id = var.vpc_id
   cidr_block = each.value
   availability_zone = each.key
 }
@@ -213,8 +213,91 @@ resource "aws_instance" "this" {
 
 #=================================================
 
-# for_each inline block with a list
+# Intro
+resource "aws_security_group" "allow_tls" {
+  name = "allow_tls"
+  description = "Allow TLS inbound traffic"
+  vpc_id = var.vpc_id
 
+  ingress {
+    description = "TLS from VPC"
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = [aws_vpc.main_cidr_block]
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [ var.default_cidr_block ]
+  }
+
+  tags = { Name = "allow_tls" }
+}
+
+# for_each inline block with a list
+variable "customer_cidrs_list" {
+  type = list(string)
+  default = [
+    "89.149.124.110/32", "89.149.124.111/32",
+    "89.149.124.112/32"
+  ]
+}
+
+resource "aws_security_group" "customer_sg" {
+  name = "customer_sg"
+  vpc_id = var.vpc_id
+
+  dynamic "ingress" {
+    for_each = var.customer_cidrs_list
+    content {
+      from_port = 8443
+      to_port = 8443
+      protocol = "tcp"
+      cidr_blocks = [ ingress.value ]
+    }
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [var.default_cidr_block]
+  }
+  tags = { Name = "customer_sg" }
+}
+
+# for_each inline block with a list
+variable "customer_cidrs_map" {
+  type = map(string)
+  default = {
+    "89.149.124.110/32" = "8443",
+    "89.149.124.111/32" = "8555",
+    "89.149.124.112/32" = "8663"
+  }
+}
+
+resource "aws_security_group" "customer_sg" {
+  name = "customer_sg"
+  vpc_id = var.vpc_id
+
+  dynamic "ingress" {
+    for_each = var.customer_cidrs_map
+    content {
+      from_port = ingress.value
+      to_port = ingress.value
+      protocol = "tcp"
+      cidr_blocks = [ ingress.key ]
+    }
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [var.default_cidr_block]
+  }
+  tags = { Name = "customer_sg" }
+}
 
 
 #################################################
